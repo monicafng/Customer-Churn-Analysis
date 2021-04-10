@@ -1,4 +1,3 @@
-setwd("/Users/monicakamanfengchen/iCloud/*MSBA CPP*/SPRING 2021/GBA6210/Slides/Project/")
 telco <- read.csv("Telco-Customer-Churn.csv")
 
 View(telco)
@@ -31,8 +30,7 @@ categorical <- c('MultipleLines','InternetService','OnlineSecurity','OnlineBacku
                  'Contract', 'PaymentMethod')
 telco[,categorical] <- lapply(telco[,categorical], factor)
 
-str(telco)
-
+table(telco$InternetService)
 table(telco$MultipleLines)
 table(telco$OnlineSecurity)
 table(telco$DeviceProtection)
@@ -66,6 +64,71 @@ str(df)
 df <- na.omit(df)
 str(df)
 
+library(psych)
+describe(telco)
+
+
+
+# Creating New Columns
+df$MultipleLines <- ifelse(df$MultipleLines == 'Yes', 1, 0)
+df$MultipleLines <- factor(df$MultipleLines)
+df$DSL <- ifelse(df$InternetService == 'DSL', 1, 0)
+df$DSL <- factor(df$DSL)
+df$FiberOptic <- ifelse(df$InternetService == 'Fiber optic', 1, 0)
+df$FiberOptic <- factor(df$FiberOptic)
+df$InternetService <- ifelse(df$InternetService == 'No', 0, 1)
+df$InternetService <- factor(df$InternetService)
+df$OnlineSecurity <- ifelse(df$OnlineSecurity == 'Yes', 1, 0)
+df$OnlineSecurity <- factor(df$OnlineSecurity)
+df$OnlineBackup <- ifelse(df$OnlineBackup == 'Yes', 1, 0)
+df$OnlineBackup <- factor(df$OnlineBackup)
+df$DeviceProtection <- ifelse(df$DeviceProtection == 'Yes', 1, 0)
+df$DeviceProtection <- factor(df$DeviceProtection)
+df$TechSupport <- ifelse(df$TechSupport == 'Yes', 1, 0)
+df$TechSupport <- factor(df$TechSupport)
+df$StreamingTV <- ifelse(df$StreamingTV == 'Yes', 1, 0)
+df$StreamingTV <- factor(df$StreamingTV)
+df$StreamingMovies <- ifelse(df$StreamingMovies == 'Yes', 1, 0)
+df$StreamingMovies <- factor(df$StreamingMovies)
+
+df$Contract1yr <- ifelse(df$Contract == 'One year', 1, 0)
+df$Contract1yr <- factor(df$Contract1yr)
+df$Contract2yr <- ifelse(df$Contract == 'Two year', 1, 0)
+df$Contract2yr <- factor(df$Contract2yr)
+df$AutoPayment <- ifelse(df$PaymentMethod %in% c('Electronic check', 'Mailed check'), 0, 1)
+                           
+                           
+
+str(df)
+colnames(df)
+
+df <- df %>% select(Male, SeniorCitizen, Partner,
+                    Dependents, tenure, Contract1yr, Contract2yr,
+                    PaperlessBilling, AutoPayment, MonthlyCharges,
+                    TotalCharges, PhoneService, MultipleLines,
+                    InternetService, DSL, FiberOptic, OnlineSecurity,
+                    OnlineBackup, DeviceProtection, TechSupport,
+                    StreamingTV, StreamingMovies, Churn)
+
+df$techaddons <- ifelse(df$OnlineSecurity == 1|df$OnlineBackup== 1 | 
+                             df$DeviceProtection== 1 |df$TechSupport== 1,1,0)
+df$streamingaddon <- ifelse(df$StreamingTV==1|df$StreamingMovies == 1,1,0)
+
+df <- df %>% select(Male, SeniorCitizen, Partner,
+                    Dependents, tenure, Contract1yr, Contract2yr,
+                    PaperlessBilling, AutoPayment, MonthlyCharges,
+                    TotalCharges, PhoneService, MultipleLines,
+                    InternetService, DSL, FiberOptic, techaddons,
+                    streamingaddon, Churn)
+
+str(df)
+
+df$AutoPayment <- factor(df$AutoPayment)
+df$techaddons <- factor(df$techaddons)
+df$streamingaddon <- factor(df$streamingaddon)
+
+str(df)
+
 # Building a model
 library(caTools)
 
@@ -74,14 +137,22 @@ split <- sample.split(df$Churn, SplitRatio = 0.7)
 train <- subset(df, split == TRUE)
 test <- subset(df, split == FALSE)
 
-model <- glm(Churn ~ ., family = binomial(link="logit"),
+model <- glm(Churn ~ .,
+             family = binomial(link="logit"),
              data = train[, -1])
 
 summary(model)
 
-test$predictedChurn <- predict(model, newdata = test[, c(-1, -21)], type = 'response')
+test$predictedChurn <- predict(model, newdata = test[, -19], type = 'response')
 test$predictedChurn <- ifelse(test$predictedChurn > 0.5, 1, 0)
 table(test$Churn, test$predictedChurn)
 
-print(paste('Accuracy =',round(((1397+324)/(1397+152+237+324)), 2)))
+print(paste('Accuracy =',round(((1398+303)/(1398+151+258+303)), 2)))
+
+
+
+
+
+
+
 
