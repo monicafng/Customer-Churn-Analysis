@@ -74,6 +74,12 @@ telco$StreamingTV <- ifelse(telco$StreamingTV == 'Yes', 1, 0)
 telco$StreamingMovies <- ifelse(telco$StreamingMovies == 'Yes', 1, 0)
 telco$Churn <- ifelse(telco$Churn == 'Yes', 1, 0)
 
+# new variables
+telco$StreamingServices <- ifelse(telco$StreamingMovies == 1 | telco$StreamingTV == 1, 1, 0)
+telco$AutoPayment <- ifelse(telco$Payment_echeck == 1 | telco$Payment_check == 1, 0, 1)
+telco$TechAddOns <- ifelse(telco$OnlineSecurity == 1 | telco$OnlineSecurity == 1 | telco$DeviceProtection == 1 | telco$TechSupport == 1, 1, 0)
+
+
 ######## DATA AND DIMENSION REDUCTION ########
 # Selecting features for model prediction
 telco <- telco %>% 
@@ -83,9 +89,11 @@ telco <- telco %>%
                 TechSupport, StreamingTV, StreamingMovies,
                 PaperlessBilling, MonthlyCharges, TotalCharges, 
                 Contract1yr, Contract2yr, Payment_echeck,
-                Payment_check, Payment_banktransfer, Churn)
+                Payment_check, Payment_banktransfer, StreamingServices,
+                AutoPayment, TechAddOns, Churn)
 
 # Dimension reduction based on logistic regression and AIC
+set.seed(101)
 split <- sample.split(telco$Churn, SplitRatio = 0.8)
 train <- subset(telco, split == TRUE)
 test <- subset(telco, split == FALSE)
@@ -101,21 +109,21 @@ confusionMatrix(factor(preds, levels = c(1, 0)),
                 factor(test$Churn, levels = c(1, 0)))
 
 # AIC
-telco.glm <- stepAIC(model, trace=FALSE)
+telco.glm <- stepAIC(model, direction = "both")
 telco.glm$anova
 
 #Final Model based on AIC:
-#  Churn ~ SeniorCitizen + Dependents + tenure + MultipleLines + 
-#  InternetService + DSL + OnlineSecurity + TechSupport + StreamingTV + 
-#  StreamingMovies + PaperlessBilling + MonthlyCharges + TotalCharges + 
-#  Contract1yr + Contract2yr + Payment_echeck
+#  Churn ~ SeniorCitizen + tenure + MultipleLines + 
+#  InternetService + DSL + DeviceProtection + StreamingTV + StreamingMovies + 
+#  PaperlessBilling + MonthlyCharges + TotalCharges + Contract1yr + 
+#  Contract2yr + Payment_echeck + TechAddOns
 
 df <- telco %>% 
-  dplyr::select(SeniorCitizen, Dependents, tenure, MultipleLines, 
-                InternetService, DSL, OnlineSecurity, TechSupport, 
-                StreamingTV, StreamingMovies, PaperlessBilling, MonthlyCharges, 
-                TotalCharges, Contract1yr, Contract2yr, Payment_echeck,
-                Churn)
+  dplyr::select(SeniorCitizen, tenure, MultipleLines, 
+                InternetService, DSL, DeviceProtection, StreamingTV, 
+                StreamingMovies, PaperlessBilling, MonthlyCharges, 
+                TotalCharges, Contract1yr, Contract2yr, 
+                Payment_echeck, TechAddOns, Churn)
 
 # Check structure of data before modeling
 str(df)
@@ -187,6 +195,7 @@ print(paste0('FDR: ', FDR))
 print(paste0('FOR: ', FOR))
 
 ######## MODEL DEPLOYMENT ########
+set.seed(101)
 split <- sample.split(df$Churn, SplitRatio = 0.8)
 train <- subset(df, split == TRUE)
 test <- subset(df, split == FALSE)
